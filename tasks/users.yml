@@ -1,0 +1,31 @@
+---
+
+- name: Create /users directory
+  file:
+    path: "/users"
+    state: directory
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Create additional users
+  ansible.builtin.user:
+    name: "{{ item.username }}"
+    state: "{{ item.state }}"
+    comment: "{{ item.fullname }}"
+    create_home: yes
+    append: yes
+    groups: "{{ item.groups }}"
+    home: "/users/{{ item.username }}"
+    password: "{{ item.password | password_hash('sha512') }}"
+    shell: "{{ item.shell | default('/bin/bash', true) }}"
+    #umask: 027
+  loop: "{{ users.users }}"
+
+- name: Write ssh authorized_keys
+  ansible.posix.authorized_key:
+    key: "{{ item.authorized_key }}"
+    user: "{{ item.username }}"
+  loop: "{{ users.users }}"
+
+

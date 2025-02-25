@@ -1,0 +1,22 @@
+---
+
+- name: Create localadmin users
+  ansible.builtin.user:
+    name: "{{ item.username }}"
+    state: "{{ item.state }}"
+    comment: "{{ item.fullname }}"
+    create_home: yes
+    append: yes
+    groups: "{{ item.groups }}"
+    home: "/home/{{ item.username }}"
+    password: "{{ item.password | password_hash('sha512') }}"
+    shell: "{{ item.shell | default('/bin/bash', true) }}"
+    #umask: "027"
+    ssh_key_file:
+  loop: "{{ localadmin_users.users }}"
+
+- name: Write ssh authorized_keys
+  ansible.posix.authorized_key:
+    key: "{{ item }}"
+    user: "localadmin"
+  loop: "{{ ssh_keys_localadmin }}"
